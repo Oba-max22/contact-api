@@ -1,0 +1,52 @@
+version: '2.2'
+
+services:
+  mysql_database:
+    container_name: mysql_database
+    image: mysql:latest
+    restart: unless-stopped
+    volumes:
+      - $HOME/database:/var/lib/mysql
+    ports:
+      - '3306:3306'
+    expose:
+      - 3306
+    environment:
+      MYSQL_DATABASE: contact_db
+      MYSQL_USER: root
+      MYSQL_PASSWORD:
+      MYSQL_ALLOW_EMPTY_PASSWORD: true
+      SERVICE_TAGS: prod
+      SERVICE_NAME: mysql_database
+    networks:
+      instance:
+        aliases:
+          - mysql_database
+
+  contact-api:
+    container_name: contact-api
+    build:
+      context: .
+    image: contact-api:v2.2
+    ports:
+      - '9000:9000'
+    expose:
+      - 9000
+    restart: always
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_database:3306/contact_db
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD:
+      SERVICE_TAGS: prod
+      SERVICE_NAME: contact
+    depends_on:
+      - mysql_database
+    networks:
+      instance:
+        aliases:
+          - contact_api
+
+networks:
+  instance:
+    name: instance
+    driver: bridge
